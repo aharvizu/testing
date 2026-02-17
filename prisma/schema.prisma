@@ -1,0 +1,377 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (NextAuth) ────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Users & Roles ──────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  SALES
+  FINANCE
+  SUPPORT
+  VIEWER
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  role           Role      @default(VIEWER)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  accounts  Account[]
+  sessions  Session[]
+  locations UserLocation[]
+  leads     Lead[]         @relation("AssignedLeads")
+  deals     Deal[]         @relation("SalesAgent")
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model UserLocation {
+  id         String   @id @default(cuid())
+  userId     String
+  locationId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, locationId])
+  @@index([userId])
+  @@index([locationId])
+}
+
+// ─── Locations ──────────────────────────────────────────────
+
+model Location {
+  id        String    @id @default(cuid())
+  name      String
+  address   String?
+  city      String?
+  state     String?
+  phone     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users    UserLocation[]
+  vehicles Vehicle[]
+  leads    Lead[]
+  deals    Deal[]
+  expenses Expense[]
+
+  @@index([deletedAt])
+}
+
+// ─── Inventory (Vehicles) ───────────────────────────────────
+
+enum VehicleStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  IN_TRANSIT
+  RECONDITIONING
+}
+
+model Vehicle {
+  id          String        @id @default(cuid())
+  vin         String        @unique
+  stockNumber String        @unique
+  make        String
+  model       String
+  year        Int
+  trim        String?
+  color       String?
+  mileage     Int           @default(0)
+  priceList   Float
+  priceSale   Float?
+  status      VehicleStatus @default(AVAILABLE)
+  locationId  String
+  location    Location      @relation(fields: [locationId], references: [id])
+  imageUrl    String?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  leads Lead[]
+  deals Deal[]
+
+  @@index([status])
+  @@index([locationId])
+  @@index([make, model])
+  @@index([year])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+// ─── Leads ──────────────────────────────────────────────────
+
+enum LeadSource {
+  WHATSAPP
+  WEB
+  FB
+  IG
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  LOST
+  WON
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  name           String
+  email          String?
+  phone          String
+  source         LeadSource @default(OTHER)
+  status         LeadStatus @default(NEW)
+  assignedToId   String?
+  assignedTo     User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  vehicleId      String?
+  vehicle        Vehicle?   @relation(fields: [vehicleId], references: [id])
+  locationId     String
+  location       Location   @relation(fields: [locationId], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  notes LeadNote[]
+  deals Deal[]
+
+  @@index([status])
+  @@index([source])
+  @@index([assignedToId])
+  @@index([locationId])
+  @@index([vehicleId])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+// ─── Deals / Sales ──────────────────────────────────────────
+
+enum PaymentType {
+  CASH
+  FINANCE
+}
+
+enum DealStatus {
+  OPEN
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model Deal {
+  id          String      @id @default(cuid())
+  leadId      String
+  lead        Lead        @relation(fields: [leadId], references: [id])
+  vehicleId   String
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
+  locationId  String
+  location    Location    @relation(fields: [locationId], references: [id])
+  salesUserId String
+  salesUser   User        @relation("SalesAgent", fields: [salesUserId], references: [id])
+  salePrice   Float
+  paymentType PaymentType @default(CASH)
+  status      DealStatus  @default(OPEN)
+  closingDate DateTime?
+  documents   Json?       // checklist: {title, completed}[]
+  notes       String?     @db.Text
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  invoices Invoice[]
+
+  @@index([status])
+  @@index([locationId])
+  @@index([salesUserId])
+  @@index([leadId])
+  @@index([vehicleId])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+// ─── Suppliers ──────────────────────────────────────────────
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  contact   String?
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?   @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  expenses Expense[]
+
+  @@index([deletedAt])
+}
+
+// ─── Expenses / Purchases ───────────────────────────────────
+
+enum ExpenseCategory {
+  VEHICLE_PURCHASE
+  REPAIR
+  TRANSPORT
+  MARKETING
+  RENT
+  UTILITIES
+  PAYROLL
+  INSURANCE
+  OTHER
+}
+
+model Expense {
+  id           String          @id @default(cuid())
+  supplierId   String?
+  supplier     Supplier?       @relation(fields: [supplierId], references: [id])
+  category     ExpenseCategory @default(OTHER)
+  description  String
+  amount       Float
+  date         DateTime
+  locationId   String
+  location     Location        @relation(fields: [locationId], references: [id])
+  notes        String?         @db.Text
+  attachmentUrl String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  @@index([category])
+  @@index([locationId])
+  @@index([supplierId])
+  @@index([date])
+  @@index([deletedAt])
+}
+
+// ─── Invoices ───────────────────────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  number    String        @unique
+  dealId    String
+  deal      Deal          @relation(fields: [dealId], references: [id])
+  amount    Float
+  tax       Float         @default(0)
+  total     Float
+  status    InvoiceStatus @default(DRAFT)
+  issuedAt  DateTime      @default(now())
+  paidAt    DateTime?
+  notes     String?       @db.Text
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  @@index([dealId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// ─── Audit Log ──────────────────────────────────────────────
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id])
+  action     AuditAction
+  entity     String      // e.g. "Vehicle", "Lead"
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
