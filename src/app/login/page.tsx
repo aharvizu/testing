@@ -35,8 +35,7 @@ export default function LoginPage() {
         toast.error('Credenciales incorrectas');
       } else if (res?.ok) {
         console.log('[LOGIN] Success, redirecting to dashboard');
-        router.push('/dashboard');
-        router.refresh();
+        window.location.href = '/dashboard';
       } else {
         console.log('[LOGIN] Unexpected response - no error but not ok');
         toast.error('Respuesta inesperada del servidor');
