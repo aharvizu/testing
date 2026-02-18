@@ -82,6 +82,13 @@ export const t = {
   lead_status_lost: 'Perdido',
   lead_status_won: 'Ganado',
 
+  // Customer types
+  customer_type: 'Tipo de Cliente',
+  customer_type_flotillas: 'Flotillas',
+  customer_type_menudeo: 'Menudeo',
+  nav_deals_flotillas: 'Flotillas',
+  nav_deals_menudeo: 'Menudeo',
+
   // Deals
   deal: 'Venta',
   deals: 'Ventas',
@@ -199,4 +206,14 @@ export const DEAL_STATUS_COLORS: Record<string, string> = {
   OPEN: 'bg-blue-100 text-blue-800',
   CLOSED_WON: 'bg-green-100 text-green-800',
   CLOSED_LOST: 'bg-red-100 text-red-800',
+};
+
+export const CUSTOMER_TYPE_LABELS: Record<string, string> = {
+  FLOTILLAS: t.customer_type_flotillas,
+  MENUDEO: t.customer_type_menudeo,
+};
+
+export const CUSTOMER_TYPE_COLORS: Record<string, string> = {
+  FLOTILLAS: 'bg-indigo-100 text-indigo-800',
+  MENUDEO: 'bg-teal-100 text-teal-800',
 };

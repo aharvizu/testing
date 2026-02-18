@@ -6,6 +6,7 @@ export const leadSchema = z.object({
   phone: z.string().min(8, 'Teléfono requerido'),
   source: z.enum(['WHATSAPP', 'WEB', 'FB', 'IG', 'OTHER']),
   status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'LOST', 'WON']),
+  customerType: z.enum(['FLOTILLAS', 'MENUDEO']),
   assignedToId: z.string().optional().nullable(),
   vehicleId: z.string().optional().nullable(),
   locationId: z.string().cuid('Ubicación requerida'),

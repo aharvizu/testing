@@ -198,6 +198,7 @@ async function main() {
         email: `${name.toLowerCase().replace(/\s/g, '.').replace(/[áéíóú]/g, 'a')}@gmail.com`,
         source: randomFrom(sources),
         status: randomFrom(leadStatuses),
+        customerType: Math.random() > 0.3 ? 'MENUDEO' : 'FLOTILLAS',
         assignedToId: Math.random() > 0.2 ? randomFrom(salesUsers).id : null,
         vehicleId: Math.random() > 0.4 ? randomFrom(vehicles).id : null,
         locationId: loc.id,

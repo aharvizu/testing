@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { DealStatus, PaymentType, Prisma, Role } from '@prisma/client';
+import { CustomerType, DealStatus, PaymentType, Prisma, Role } from '@prisma/client';
 import { locationFilter } from '@/lib/permissions';
 import { createAuditLog } from './audit';
 import { computeDiff } from '@/lib/utils';
@@ -12,6 +12,7 @@ export interface DealListParams {
   locationId?: string;
   salesUserId?: string;
   paymentType?: PaymentType;
+  customerType?: CustomerType;
   role: Role;
   locationIds: string[];
 }
@@ -24,6 +25,7 @@ export async function getDeals({
   locationId,
   salesUserId,
   paymentType,
+  customerType,
   role,
   locationIds,
 }: DealListParams) {
@@ -34,6 +36,7 @@ export async function getDeals({
     ...(locationId && { locationId }),
     ...(salesUserId && { salesUserId }),
     ...(paymentType && { paymentType }),
+    ...(customerType && { lead: { customerType } }),
     ...(search && {
       OR: [
         { lead: { name: { contains: search, mode: 'insensitive' } } },
@@ -47,7 +50,7 @@ export async function getDeals({
     prisma.deal.findMany({
       where,
       include: {
-        lead: { select: { id: true, name: true, phone: true } },
+        lead: { select: { id: true, name: true, phone: true, customerType: true } },
         vehicle: { select: { id: true, make: true, model: true, year: true, stockNumber: true } },
         location: { select: { id: true, name: true } },
         salesUser: { select: { id: true, name: true } },

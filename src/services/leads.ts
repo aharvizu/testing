@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { LeadStatus, LeadSource, Prisma, Role } from '@prisma/client';
+import { CustomerType, LeadStatus, LeadSource, Prisma, Role } from '@prisma/client';
 import { locationFilter } from '@/lib/permissions';
 import { createAuditLog } from './audit';
 import { computeDiff } from '@/lib/utils';
@@ -81,6 +81,7 @@ export async function createLead(
     phone: string;
     source: LeadSource;
     status: LeadStatus;
+    customerType: CustomerType;
     assignedToId?: string | null;
     vehicleId?: string | null;
     locationId: string;
@@ -94,6 +95,7 @@ export async function createLead(
       phone: data.phone,
       source: data.source,
       status: data.status,
+      customerType: data.customerType,
       assignedTo: data.assignedToId ? { connect: { id: data.assignedToId } } : undefined,
       vehicle: data.vehicleId ? { connect: { id: data.vehicleId } } : undefined,
       location: { connect: { id: data.locationId } },

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormField } from '@/components/forms/form-field';
-import { LEAD_STATUS_LABELS, LEAD_SOURCE_LABELS, t } from '@/lib/constants';
+import { LEAD_STATUS_LABELS, LEAD_SOURCE_LABELS, CUSTOMER_TYPE_LABELS, t } from '@/lib/constants';
 import { createLeadAction, updateLeadAction } from '../actions';
 
 interface LeadFormProps {
@@ -31,6 +31,7 @@ export function LeadForm({ locations, salesUsers, defaultValues }: LeadFormProps
       phone: '',
       source: 'OTHER',
       status: 'NEW',
+      customerType: 'MENUDEO',
       assignedToId: null,
       vehicleId: null,
       locationId: '',
@@ -69,7 +70,7 @@ export function LeadForm({ locations, salesUsers, defaultValues }: LeadFormProps
         <Input type="email" {...form.register('email')} />
       </FormField>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <FormField label={t.lead_source} error={form.formState.errors.source} required>
           <Select value={form.watch('source')} onValueChange={(v) => form.setValue('source', v as any)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -85,6 +86,16 @@ export function LeadForm({ locations, salesUsers, defaultValues }: LeadFormProps
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {Object.entries(LEAD_STATUS_LABELS).map(([key, label]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField label={t.customer_type} error={form.formState.errors.customerType} required>
+          <Select value={form.watch('customerType')} onValueChange={(v) => form.setValue('customerType', v as any)}>
+            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+            <SelectContent>
+              {Object.entries(CUSTOMER_TYPE_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>{label}</SelectItem>
               ))}
             </SelectContent>

@@ -161,6 +161,13 @@ model Vehicle {
   @@index([createdAt])
 }
 
+// ─── Customer Types ─────────────────────────────────────────
+
+enum CustomerType {
+  FLOTILLAS
+  MENUDEO
+}
+
 // ─── Leads ──────────────────────────────────────────────────
 
 enum LeadSource {
@@ -180,12 +187,13 @@ enum LeadStatus {
 }
 
 model Lead {
-  id             String     @id @default(cuid())
+  id             String       @id @default(cuid())
   name           String
   email          String?
   phone          String
-  source         LeadSource @default(OTHER)
-  status         LeadStatus @default(NEW)
+  source         LeadSource   @default(OTHER)
+  status         LeadStatus   @default(NEW)
+  customerType   CustomerType
   assignedToId   String?
   assignedTo     User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
   vehicleId      String?
@@ -201,6 +209,7 @@ model Lead {
 
   @@index([status])
   @@index([source])
+  @@index([customerType])
   @@index([assignedToId])
   @@index([locationId])
   @@index([vehicleId])

@@ -102,6 +102,8 @@ export async function createDealAction(formData: unknown) {
   if (!canAccessLocation(session.user.role, session.user.locationIds, parsed.locationId)) unauthorized();
   await dealService.createDeal(parsed, session.user.id);
   revalidatePath('/deals');
+  revalidatePath('/deals/flotillas');
+  revalidatePath('/deals/menudeo');
   return { success: true };
 }
 
@@ -112,6 +114,8 @@ export async function updateDealAction(id: string, formData: unknown) {
   if (!canAccessLocation(session.user.role, session.user.locationIds, parsed.locationId)) unauthorized();
   await dealService.updateDeal(id, parsed, session.user.id);
   revalidatePath('/deals');
+  revalidatePath('/deals/flotillas');
+  revalidatePath('/deals/menudeo');
   revalidatePath(`/deals/${id}`);
   return { success: true };
 }
@@ -121,6 +125,8 @@ export async function deleteDealAction(id: string) {
   if (!hasPermission(session.user.role, 'deals', 'delete')) unauthorized();
   await dealService.softDeleteDeal(id, session.user.id);
   revalidatePath('/deals');
+  revalidatePath('/deals/flotillas');
+  revalidatePath('/deals/menudeo');
   return { success: true };
 }
 

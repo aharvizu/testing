@@ -8,7 +8,7 @@ import { DataTable } from '@/components/tables/data-table';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { DeleteDialog } from '@/components/forms/delete-dialog';
-import { LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LEAD_SOURCE_LABELS, t } from '@/lib/constants';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_COLORS, LEAD_SOURCE_LABELS, CUSTOMER_TYPE_LABELS, CUSTOMER_TYPE_COLORS, t } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
 import { deleteLeadAction } from '../actions';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ interface Lead {
   phone: string;
   source: string;
   status: string;
+  customerType: string;
   createdAt: Date | string;
   location: { id: string; name: string };
   assignedTo: { id: string; name: string | null } | null;
@@ -78,6 +79,16 @@ export function LeadsTable({ leads, page, totalPages, canEdit, canDelete }: Lead
         <StatusBadge
           label={LEAD_STATUS_LABELS[row.original.status] || row.original.status}
           colorClass={LEAD_STATUS_COLORS[row.original.status] || ''}
+        />
+      ),
+    },
+    {
+      accessorKey: 'customerType',
+      header: t.customer_type,
+      cell: ({ row }) => (
+        <StatusBadge
+          label={CUSTOMER_TYPE_LABELS[row.original.customerType] || row.original.customerType}
+          colorClass={CUSTOMER_TYPE_COLORS[row.original.customerType] || ''}
         />
       ),
     },
