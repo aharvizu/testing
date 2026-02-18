@@ -20,17 +20,31 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    const res = await signIn('credentials', {
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      toast.error('Credenciales incorrectas');
-    } else {
-      router.push('/dashboard');
-      router.refresh();
+    const email = formData.get('email') as string;
+    console.log('[LOGIN] Attempting credentials login with email:', email);
+    try {
+      const res = await signIn('credentials', {
+        email,
+        password: formData.get('password') as string,
+        redirect: false,
+      });
+      console.log('[LOGIN] signIn response:', JSON.stringify(res));
+      setLoading(false);
+      if (res?.error) {
+        console.log('[LOGIN] Error:', res.error);
+        toast.error('Credenciales incorrectas');
+      } else if (res?.ok) {
+        console.log('[LOGIN] Success, redirecting to dashboard');
+        router.push('/dashboard');
+        router.refresh();
+      } else {
+        console.log('[LOGIN] Unexpected response - no error but not ok');
+        toast.error('Respuesta inesperada del servidor');
+      }
+    } catch (err) {
+      console.error('[LOGIN] Exception during signIn:', err);
+      setLoading(false);
+      toast.error('Error de conexión al servidor');
     }
   }
 

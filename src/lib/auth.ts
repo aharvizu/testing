@@ -32,6 +32,11 @@ declare module 'next-auth/jwt' {
 
 const providers: NextAuthOptions['providers'] = [];
 
+console.log('[AUTH CONFIG] ENABLE_CREDENTIALS_PROVIDER:', process.env.ENABLE_CREDENTIALS_PROVIDER);
+console.log('[AUTH CONFIG] RESEND_API_KEY set:', !!process.env.RESEND_API_KEY);
+console.log('[AUTH CONFIG] NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+console.log('[AUTH CONFIG] NEXTAUTH_SECRET set:', !!process.env.NEXTAUTH_SECRET);
+
 // Email magic link via Resend
 if (process.env.RESEND_API_KEY) {
   providers.push(
@@ -59,12 +64,21 @@ if (process.env.ENABLE_CREDENTIALS_PROVIDER === 'true') {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        console.log('[AUTH] authorize called with email:', credentials?.email);
+        if (!credentials?.email || !credentials?.password) {
+          console.log('[AUTH] Missing email or password');
+          return null;
+        }
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-        if (!user || !user.hashedPassword || !user.isActive || user.deletedAt) return null;
+        console.log('[AUTH] User found:', !!user, user ? { id: user.id, isActive: user.isActive, hasPassword: !!user.hashedPassword, deletedAt: user.deletedAt } : null);
+        if (!user || !user.hashedPassword || !user.isActive || user.deletedAt) {
+          console.log('[AUTH] User validation failed');
+          return null;
+        }
         const valid = await compare(credentials.password, user.hashedPassword);
+        console.log('[AUTH] Password valid:', valid);
         if (!valid) return null;
         return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
@@ -72,10 +86,13 @@ if (process.env.ENABLE_CREDENTIALS_PROVIDER === 'true') {
   );
 }
 
+console.log('[AUTH CONFIG] Registered providers:', providers.map((p) => p.name));
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
   providers,
   session: { strategy: 'jwt' },
+  debug: process.env.NODE_ENV !== 'production',
   pages: {
     signIn: '/login',
   },
